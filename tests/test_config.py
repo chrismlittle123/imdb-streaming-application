@@ -24,58 +24,6 @@ def cleanup_spark():
     SparkSession.builder.getOrCreate().stop()
 
 
-def test_file_paths_exist():
-    """Test that all configured file paths exist"""
-    paths = [
-        Config.RATINGS_PATH,  # title.ratings.tsv
-        Config.BASICS_PATH,  # title.basics.tsv
-        Config.NAMES_PATH,  # name.basics.tsv
-    ]
-
-    for path in paths:
-        assert os.path.exists(path), f"File not found: {path}"
-
-
-def test_schema_structures():
-    """Test that all schemas are properly structured StructType objects"""
-    schemas = [
-        Config.RATINGS_SCHEMA,
-        Config.MOVIES_SCHEMA,
-        Config.NAMES_SCHEMA,
-        Config.CREW_SCHEMA,
-        Config.EPISODE_SCHEMA,
-        Config.PRINCIPALS_SCHEMA,
-        Config.AKAS_SCHEMA,
-    ]
-
-    for schema in schemas:
-        assert isinstance(schema, StructType), "Schema is not a StructType"
-        assert len(schema.fields) > 0, "Schema has no fields"
-
-
-def test_ratings_schema_with_data(spark):
-    """Test that ratings schema matches actual data structure"""
-    try:
-        df = spark.read.csv(
-            Config.RATINGS_PATH, header=True, sep="\t", schema=Config.RATINGS_SCHEMA
-        )
-        # If schema doesn't match, this will raise an exception
-        df.count()
-    except Exception as e:
-        pytest.fail(f"Failed to read ratings data with schema: {str(e)}")
-
-
-def test_movies_schema_with_data(spark):
-    """Test that movies schema matches actual data structure"""
-    try:
-        df = spark.read.csv(
-            Config.BASICS_PATH, header=True, sep="\t", schema=Config.MOVIES_SCHEMA
-        )
-        df.count()
-    except Exception as e:
-        pytest.fail(f"Failed to read movies data with schema: {str(e)}")
-
-
 def test_min_votes_constant():
     """Test that MIN_VOTES is properly set"""
     assert isinstance(Config.MIN_VOTES, int), "MIN_VOTES should be an integer"

@@ -1,9 +1,8 @@
 version: '3'
 services:
   spark:
-    build: .
+    image: chrismlittle123/imdb-streaming-app:latest
     volumes:
-      - ./data:/app/data
       - ./src:/app/src
       - ./tests:/app/tests
     environment:
