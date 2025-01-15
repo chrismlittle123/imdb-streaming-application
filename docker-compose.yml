@@ -1,0 +1,10 @@
+version: '3'
+services:
+  spark:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src
+      - ./tests:/app/tests
+    environment:
+      - SPARK_LOCAL_IP=spark 

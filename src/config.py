@@ -103,9 +103,10 @@ class Config:
     SPARK_CONFIGS = {
         "spark.sql.streaming.schemaInference": "true",
         "spark.sql.streaming.checkpointLocation": "./checkpoints",
-        "spark.sql.shuffle.partitions": "10",  # Adjust based on data size
-        "spark.memory.offHeap.enabled": "true",
-        "spark.memory.offHeap.size": "1g",
+        "spark.sql.shuffle.partitions": "10",
+        "spark.driver.host": "spark",
+        "spark.driver.bindAddress": "0.0.0.0",
+        "spark.network.timeout": "600s",
     }
 
     # Streaming Configuration

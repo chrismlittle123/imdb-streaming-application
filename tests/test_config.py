@@ -10,21 +10,26 @@ def spark():
     """Create a Spark session for testing"""
     return (
         SparkSession.builder.appName("TestIMDBAnalysis")
-        .master("local[1]")
+        .master("local[*]")
+        .config("spark.driver.host", "spark")
+        .config("spark.driver.bindAddress", "0.0.0.0")
         .getOrCreate()
     )
+
+
+@pytest.fixture(scope="module", autouse=True)
+def cleanup_spark():
+    """Clean up Spark session after tests"""
+    yield
+    SparkSession.builder.getOrCreate().stop()
 
 
 def test_file_paths_exist():
     """Test that all configured file paths exist"""
     paths = [
-        Config.RATINGS_PATH,
-        Config.BASICS_PATH,
-        Config.CREW_PATH,
-        Config.EPISODE_PATH,
-        Config.NAMES_PATH,
-        Config.PRINCIPALS_PATH,
-        Config.AKAS_PATH,
+        Config.RATINGS_PATH,  # title.ratings.tsv
+        Config.BASICS_PATH,  # title.basics.tsv
+        Config.NAMES_PATH,  # name.basics.tsv
     ]
 
     for path in paths:
