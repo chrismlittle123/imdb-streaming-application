@@ -39,7 +39,7 @@ tconst	averageRating	numVotes
 
 ## Problem Statement
  
-Your task is to write a streaming application using Apache Sparkthat can answer the following questions using the imdb data set.
+Your task is to write a streaming application using Apache Spark that can answer the following questions using the imdb data set.
  
 1. Retrieve the top 10 movies with a minimum of 500 votes with the ranking determined by:
 (numVotes/averageNumberOfVotes) * averageRating
