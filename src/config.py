@@ -11,15 +11,18 @@ from pyspark.sql.types import (
 class Config:
     """Configuration settings for the IMDB data analysis application"""
 
+    # S3 bucket configuration
+    S3_BUCKET = "imdb-data-495700631743"
+    S3_PREFIX = f"s3a://{S3_BUCKET}"
+
     # File paths
-    DATA_DIR = "data"
-    RATINGS_PATH = f"{DATA_DIR}/title.ratings.tsv"
-    BASICS_PATH = f"{DATA_DIR}/title.basics.tsv"
-    CREW_PATH = f"{DATA_DIR}/title.crew.tsv"
-    EPISODE_PATH = f"{DATA_DIR}/title.episode.tsv"
-    NAMES_PATH = f"{DATA_DIR}/name.basics.tsv"
-    PRINCIPALS_PATH = f"{DATA_DIR}/title.principals.tsv"
-    AKAS_PATH = f"{DATA_DIR}/title.akas.tsv"
+    RATINGS_PATH = f"{S3_PREFIX}/title.ratings.tsv"
+    BASICS_PATH = f"{S3_PREFIX}/title.basics.tsv"
+    CREW_PATH = f"{S3_PREFIX}/title.crew.tsv"
+    EPISODE_PATH = f"{S3_PREFIX}/title.episode.tsv"
+    NAMES_PATH = f"{S3_PREFIX}/name.basics.tsv"
+    PRINCIPALS_PATH = f"{S3_PREFIX}/title.principals.tsv"
+    AKAS_PATH = f"{S3_PREFIX}/title.akas.tsv"
 
     # Constants
     MIN_VOTES = 500  # Minimum number of votes required for movie consideration

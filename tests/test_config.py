@@ -13,6 +13,15 @@ def spark():
         .master("local[*]")
         .config("spark.driver.host", "spark")
         .config("spark.driver.bindAddress", "0.0.0.0")
+        .config(
+            "spark.hadoop.fs.s3a.aws.credentials.provider",
+            "org.apache.hadoop.fs.s3a.AnonymousAWSCredentialsProvider",
+        )
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config("spark.hadoop.fs.s3a.endpoint", "s3.us-east-1.amazonaws.com")
+        .config("spark.hadoop.fs.s3a.path.style.access", "false")
+        .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "true")
+        .config("spark.hadoop.fs.s3a.signing-algorithm", "S3SignerType")
         .getOrCreate()
     )
 
@@ -22,6 +31,50 @@ def cleanup_spark():
     """Clean up Spark session after tests"""
     yield
     SparkSession.builder.getOrCreate().stop()
+
+
+def test_s3_paths():
+    """Test that S3 paths are properly configured"""
+    assert Config.S3_BUCKET == "imdb-data-495700631743"
+    assert Config.S3_PREFIX == f"s3a://{Config.S3_BUCKET}"
+
+    # Test that all paths use the S3 prefix
+    paths = [
+        Config.RATINGS_PATH,
+        Config.BASICS_PATH,
+        Config.CREW_PATH,
+        Config.EPISODE_PATH,
+        Config.NAMES_PATH,
+        Config.PRINCIPALS_PATH,
+        Config.AKAS_PATH,
+    ]
+
+    for path in paths:
+        assert path.startswith(Config.S3_PREFIX), f"Path should use S3 prefix: {path}"
+        assert path.endswith(".tsv"), f"Path should end with .tsv: {path}"
+
+
+def test_ratings_schema_with_data(spark):
+    """Test that ratings schema matches actual data structure"""
+    try:
+        df = spark.read.csv(
+            Config.RATINGS_PATH, header=True, sep="\t", schema=Config.RATINGS_SCHEMA
+        )
+        # If schema doesn't match, this will raise an exception
+        df.take(1)  # Only fetch one row to verify schema
+    except Exception as e:
+        pytest.fail(f"Failed to read ratings data with schema: {str(e)}")
+
+
+def test_movies_schema_with_data(spark):
+    """Test that movies schema matches actual data structure"""
+    try:
+        df = spark.read.csv(
+            Config.BASICS_PATH, header=True, sep="\t", schema=Config.MOVIES_SCHEMA
+        )
+        df.take(1)  # Only fetch one row to verify schema
+    except Exception as e:
+        pytest.fail(f"Failed to read movies data with schema: {str(e)}")
 
 
 def test_min_votes_constant():
