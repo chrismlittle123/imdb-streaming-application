@@ -18,6 +18,10 @@ RUN apt-get update && \
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
+# Create necessary directories
+RUN mkdir -p /app/data /app/checkpoints && \
+    chown -R spark:spark /app/data /app/checkpoints
+
 # Switch back to spark user
 USER spark
 
@@ -31,5 +35,5 @@ ENV SPARK_HOME=/opt/spark
 ENV PATH=$PATH:$SPARK_HOME/bin
 ENV AWS_REGION=eu-west-2
 
-# Default command to run tests
-CMD ["pytest", "tests/test_config.py", "-v"] 
+# Command to run the stream processor
+CMD ["python3", "src/stream_processor.py"]
