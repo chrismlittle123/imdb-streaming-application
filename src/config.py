@@ -13,7 +13,8 @@ class Config:
 
     # S3 bucket configuration
     S3_BUCKET = "imdb-data-495700631743"
-    S3_PREFIX = f"s3a://{S3_BUCKET}"
+    AWS_REGION = "eu-west-2"
+    S3_PREFIX = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com"
 
     # File paths
     RATINGS_PATH = f"{S3_PREFIX}/title.ratings.tsv"

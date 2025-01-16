@@ -1,8 +1,19 @@
 import os
 import pytest
+import requests
+import tempfile
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType
 from src.config import Config
+
+
+def download_file(url, local_path):
+    """Download a file from URL to local path"""
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    with open(local_path, "wb") as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
 
 
 @pytest.fixture(scope="module")
@@ -13,17 +24,15 @@ def spark():
         .master("local[*]")
         .config("spark.driver.host", "spark")
         .config("spark.driver.bindAddress", "0.0.0.0")
-        .config(
-            "spark.hadoop.fs.s3a.aws.credentials.provider",
-            "org.apache.hadoop.fs.s3a.AnonymousAWSCredentialsProvider",
-        )
-        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-        .config("spark.hadoop.fs.s3a.endpoint", "s3.us-east-1.amazonaws.com")
-        .config("spark.hadoop.fs.s3a.path.style.access", "false")
-        .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "true")
-        .config("spark.hadoop.fs.s3a.signing-algorithm", "S3SignerType")
         .getOrCreate()
     )
+
+
+@pytest.fixture(scope="module")
+def temp_dir():
+    """Create a temporary directory for downloaded files"""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield tmp_dir
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -36,7 +45,11 @@ def cleanup_spark():
 def test_s3_paths():
     """Test that S3 paths are properly configured"""
     assert Config.S3_BUCKET == "imdb-data-495700631743"
-    assert Config.S3_PREFIX == f"s3a://{Config.S3_BUCKET}"
+    assert Config.AWS_REGION == "eu-west-2"
+    assert (
+        Config.S3_PREFIX
+        == f"https://{Config.S3_BUCKET}.s3.{Config.AWS_REGION}.amazonaws.com"
+    )
 
     # Test that all paths use the S3 prefix
     paths = [
@@ -54,25 +67,36 @@ def test_s3_paths():
         assert path.endswith(".tsv"), f"Path should end with .tsv: {path}"
 
 
-def test_ratings_schema_with_data(spark):
+def test_ratings_schema_with_data(spark, temp_dir):
     """Test that ratings schema matches actual data structure"""
     try:
+        # Download the file
+        local_path = os.path.join(temp_dir, "title.ratings.tsv")
+        download_file(Config.RATINGS_PATH, local_path)
+
+        # Read with Spark
         df = spark.read.csv(
-            Config.RATINGS_PATH, header=True, sep="\t", schema=Config.RATINGS_SCHEMA
+            local_path, header=True, sep="\t", schema=Config.RATINGS_SCHEMA
         )
-        # If schema doesn't match, this will raise an exception
-        df.take(1)  # Only fetch one row to verify schema
+        # Only fetch one row to verify schema
+        df.limit(1).collect()
     except Exception as e:
         pytest.fail(f"Failed to read ratings data with schema: {str(e)}")
 
 
-def test_movies_schema_with_data(spark):
+def test_movies_schema_with_data(spark, temp_dir):
     """Test that movies schema matches actual data structure"""
     try:
+        # Download the file
+        local_path = os.path.join(temp_dir, "title.basics.tsv")
+        download_file(Config.BASICS_PATH, local_path)
+
+        # Read with Spark
         df = spark.read.csv(
-            Config.BASICS_PATH, header=True, sep="\t", schema=Config.MOVIES_SCHEMA
+            local_path, header=True, sep="\t", schema=Config.MOVIES_SCHEMA
         )
-        df.take(1)  # Only fetch one row to verify schema
+        # Only fetch one row to verify schema
+        df.limit(1).collect()
     except Exception as e:
         pytest.fail(f"Failed to read movies data with schema: {str(e)}")
 
