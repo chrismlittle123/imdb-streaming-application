@@ -5,6 +5,7 @@ from pyspark.sql.types import (
     IntegerType,
     FloatType,
     BooleanType,
+    ArrayType,
 )
 
 
@@ -17,16 +18,19 @@ class Config:
     S3_PREFIX = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com"
 
     # File paths
-    RATINGS_PATH = f"{S3_PREFIX}/title.ratings.tsv"
-    BASICS_PATH = f"{S3_PREFIX}/title.basics.tsv"
-    CREW_PATH = f"{S3_PREFIX}/title.crew.tsv"
-    EPISODE_PATH = f"{S3_PREFIX}/title.episode.tsv"
-    NAMES_PATH = f"{S3_PREFIX}/name.basics.tsv"
-    PRINCIPALS_PATH = f"{S3_PREFIX}/title.principals.tsv"
-    AKAS_PATH = f"{S3_PREFIX}/title.akas.tsv"
+    RATINGS_PATH = f"{S3_PREFIX}/title.ratings.parquet"
+    BASICS_PATH = f"{S3_PREFIX}/title.basics.parquet"
+    CREW_PATH = f"{S3_PREFIX}/title.crew.parquet"
+    EPISODE_PATH = f"{S3_PREFIX}/title.episode.parquet"
+    NAMES_PATH = f"{S3_PREFIX}/name.basics.parquet"
+    PRINCIPALS_PATH = f"{S3_PREFIX}/title.principals.parquet"
+
+    # Local data directory
+    DATA_DIR = "data"
 
     # Constants
     MIN_VOTES = 500  # Minimum number of votes required for movie consideration
+    BATCH_SIZE = 100  # Number of records per batch for streaming
 
     # Schema definitions
     RATINGS_SCHEMA = StructType(
@@ -57,16 +61,18 @@ class Config:
             StructField("primaryName", StringType(), False),
             StructField("birthYear", IntegerType(), True),
             StructField("deathYear", IntegerType(), True),
-            StructField("primaryProfession", StringType(), True),
-            StructField("knownForTitles", StringType(), True),
+            StructField(
+                "primaryProfession", StringType(), True
+            ),  # Comma-separated list
+            StructField("knownForTitles", StringType(), True),  # Comma-separated list
         ]
     )
 
     CREW_SCHEMA = StructType(
         [
             StructField("tconst", StringType(), False),
-            StructField("directors", StringType(), True),
-            StructField("writers", StringType(), True),
+            StructField("directors", StringType(), True),  # Comma-separated list
+            StructField("writers", StringType(), True),  # Comma-separated list
         ]
     )
 
@@ -86,31 +92,25 @@ class Config:
             StructField("nconst", StringType(), False),
             StructField("category", StringType(), True),
             StructField("job", StringType(), True),
-            StructField("characters", StringType(), True),
-        ]
-    )
-
-    AKAS_SCHEMA = StructType(
-        [
-            StructField("titleId", StringType(), False),
-            StructField("ordering", IntegerType(), False),
-            StructField("title", StringType(), False),
-            StructField("region", StringType(), True),
-            StructField("language", StringType(), True),
-            StructField("types", StringType(), True),
-            StructField("attributes", StringType(), True),
-            StructField("isOriginalTitle", BooleanType(), True),
+            StructField("characters", StringType(), True),  # JSON array as string
         ]
     )
 
     # Spark Configuration
     SPARK_CONFIGS = {
+        # General Spark configs
         "spark.sql.streaming.schemaInference": "true",
         "spark.sql.streaming.checkpointLocation": "./checkpoints",
         "spark.sql.shuffle.partitions": "10",
         "spark.driver.host": "spark",
         "spark.driver.bindAddress": "0.0.0.0",
         "spark.network.timeout": "600s",
+        # Memory configurations
+        "spark.driver.memory": "4g",
+        "spark.executor.memory": "4g",
+        # Streaming configurations
+        "spark.streaming.stopGracefullyOnShutdown": "true",
+        "spark.streaming.backpressure.enabled": "true",
     }
 
     # Streaming Configuration
@@ -123,3 +123,11 @@ class Config:
         "memory": "complete",  # Keep full results in memory
         "file": "append",  # Append new results to files
     }
+
+    # Partition configurations
+    RATINGS_VOTE_RANGES = [
+        (500, 1000),
+        (1001, 5000),
+        (5001, 10000),
+        (10001, float("inf")),
+    ]

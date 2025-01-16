@@ -6,7 +6,7 @@ Use Python and provide testing evidence.
  
 ## Data Source
     
-The following datasets from IMDB are used in parquet (tab-separated values) format in this S3 bucket: imdb-data-495700631743
+The following datasets from IMDB are used in parquet format in this S3 bucket: imdb-data-495700631743
 
 - **name.basics**
   - nconst (string) - Alphanumeric unique identifier for names

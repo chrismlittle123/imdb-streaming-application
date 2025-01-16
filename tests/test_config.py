@@ -59,12 +59,11 @@ def test_s3_paths():
         Config.EPISODE_PATH,
         Config.NAMES_PATH,
         Config.PRINCIPALS_PATH,
-        Config.AKAS_PATH,
     ]
 
     for path in paths:
         assert path.startswith(Config.S3_PREFIX), f"Path should use S3 prefix: {path}"
-        assert path.endswith(".tsv"), f"Path should end with .tsv: {path}"
+        assert path.endswith(".parquet"), f"Path should end with .parquet: {path}"
 
 
 def test_ratings_schema_with_data(spark, temp_dir):
