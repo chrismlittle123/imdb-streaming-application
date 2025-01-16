@@ -53,6 +53,7 @@ Also, create another table from name.basics which has title Id and the names of 
 Use the ids if the 10 movies and do 
  
 The application should:
-- Be runnable on a local machine
+- Be runnable on using Docker and Docker Compose
 - Have documentation on how to execute
-- Be reproducible
+- Be reproducible using docker-compose up
+- Have tests
