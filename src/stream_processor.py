@@ -54,9 +54,12 @@ class StreamProcessor:
 
     def process_ratings(self):
         """Process ratings data in batches and maintain top 10 movies"""
-        # Ensure we have the ratings file locally
+        # Ensure we have the required files locally
         local_ratings_path = self._ensure_local_file(
             Config.RATINGS_PATH, "title.ratings.tsv"
+        )
+        local_basics_path = self._ensure_local_file(
+            Config.BASICS_PATH, "title.basics.tsv"
         )
 
         # Read the ratings data to calculate average votes
@@ -68,31 +71,58 @@ class StreamProcessor:
             header=True,
         )
 
+        # Read the basics data for movie titles
+        print("Reading movie titles data...")
+        basics_df = self.spark.read.csv(
+            local_basics_path,
+            schema=Config.MOVIES_SCHEMA,
+            sep=r"\t",
+            header=True,
+        ).filter(
+            col("titleType") == "movie"
+        )  # Filter for movies only
+
         # Calculate average votes before starting the stream
         self.avg_num_votes = self._calculate_average_votes(ratings_df)
         print(f"Average number of votes: {self.avg_num_votes}")
 
         # Filter and calculate rankings for all movies
         print("\nCalculating rankings for all movies...")
-        processed_df = ratings_df.filter(
-            col("numVotes") >= Config.MIN_VOTES
-        ).withColumn(
-            "ranking",
-            (col("numVotes") / lit(self.avg_num_votes)) * col("averageRating"),
+        processed_df = (
+            ratings_df.join(
+                basics_df.select("tconst"), "tconst", "inner"
+            )  # Only keep movies
+            .filter(col("numVotes") >= Config.MIN_VOTES)
+            .withColumn(
+                "ranking",
+                (col("numVotes") / lit(self.avg_num_votes)) * col("averageRating"),
+            )
         )
 
         # Get top 10 movies
         top_movies_df = processed_df.orderBy(col("ranking").desc()).limit(10)
+
+        # Join with basics to get movie titles
+        top_movies_with_titles = top_movies_df.join(basics_df, "tconst", "left").select(
+            "tconst",
+            "primaryTitle",
+            "originalTitle",
+            "titleType",
+            "startYear",
+            "averageRating",
+            "numVotes",
+            "ranking",
+        )
 
         # Process in batches
         batch_size = Config.BATCH_SIZE
         total_rows = ratings_df.count()
         print(f"\nProcessing {total_rows} records in batches of {batch_size}...")
 
-        # Show the top 10 movies
+        # Show the top 10 movies with titles
         print("\nTop 10 Movies by Ranking:")
-        print("=" * 80)
-        top_movies_df.show(truncate=False)
+        print("=" * 120)
+        top_movies_with_titles.show(truncate=False)
 
     def stop(self):
         """Stop the Spark session"""
