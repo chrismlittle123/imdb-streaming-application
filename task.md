@@ -16,25 +16,16 @@ The following datasets from IMDB are used in parquet format in this S3 bucket: i
   - primaryProfession (array) - Comma-separated list of primary professions
   - knownForTitles (array) - Comma-separated list of title IDs the person is known for
 
-
-- **title.crew**
+- **title.basics**
   - tconst (string) - Alphanumeric unique identifier for titles
-  - directors (array) - Comma-separated list of nconst identifiers for directors
-  - writers (array) - Comma-separated list of nconst identifiers for writers
-
-- **title.episode**
-  - tconst (string) - Alphanumeric identifier for this episode
-  - parentTconst (string) - Alphanumeric identifier for the parent TV series
-  - seasonNumber (integer) - Season number the episode belongs to
-  - episodeNumber (integer) - Episode number within the season
-
-- **title.principals**
-  - tconst (string) - Alphanumeric unique identifier for titles
-  - ordering (integer) - Order of importance in the title
-  - nconst (string) - Alphanumeric unique identifier for names
-  - category (string) - Category of job (e.g., actor, director)
-  - job (string) - Specific job title if applicable
-  - characters (string) - Name of character played if applicable
+  - titleType (string) - Type/format of the title (e.g., movie, short, tvSeries)
+  - primaryTitle (string) - The more popular title / the title used by the filmmakers on promotional materials at the point of release
+  - originalTitle (string) - Original title, in the original language
+  - isAdult (boolean) - 0: non-adult title; 1: adult title
+  - startYear (integer) - Release year of a title in YYYY format
+  - endYear (integer) - End year of a title in YYYY format
+  - runtimeMinutes (integer) - Primary runtime of the title, in minutes
+  - genres (array) - Comma-separated list of genres associated with the title
 
 - **title.ratings**
   - tconst (string) - Alphanumeric unique identifier for titles
@@ -51,7 +42,7 @@ Your task is to write a streaming application using Apache Spark that can answer
    ```
 
 
-Stream/batch load title.ratings and calculate the metric, take top 10.
+Batch load title.ratings with batch size of 100 and calculate the metric, take top 10.
  
 2. For these 10 movies, list the persons who are most often credited and list the different titles of the 10 movies.
 
@@ -65,13 +56,3 @@ The application should:
 - Be runnable on a local machine
 - Have documentation on how to execute
 - Be reproducible
-
-
-Use the following as a guide:
-
-- Use Apache Spark configured with S3, the datasets are publicly available
-- Read data in batches, read the file in chunks of 100 from S3
-- Use limit and offset-like behavior to simulate batch processing
-- Create a process function to handle each batch, calculating the desired metrics
-- Remember to repartition the data
-- Use pre-defined schemas
