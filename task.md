@@ -6,9 +6,9 @@ Use Python and provide testing evidence.
  
 ## Data Source
     
-The following datasets from IMDB are used in TSV (tab-separated values) format in this S3 bucket: imdb-data-495700631743
+The following datasets from IMDB are used in parquet (tab-separated values) format in this S3 bucket: imdb-data-495700631743
 
-- **name.basics.tsv**
+- **name.basics**
   - nconst (string) - Alphanumeric unique identifier for names
   - primaryName (string) - Name of the person
   - birthYear (integer) - Birth year in YYYY format
@@ -17,18 +17,18 @@ The following datasets from IMDB are used in TSV (tab-separated values) format i
   - knownForTitles (array) - Comma-separated list of title IDs the person is known for
 
 
-- **title.crew.tsv**
+- **title.crew**
   - tconst (string) - Alphanumeric unique identifier for titles
   - directors (array) - Comma-separated list of nconst identifiers for directors
   - writers (array) - Comma-separated list of nconst identifiers for writers
 
-- **title.episode.tsv**
+- **title.episode**
   - tconst (string) - Alphanumeric identifier for this episode
   - parentTconst (string) - Alphanumeric identifier for the parent TV series
   - seasonNumber (integer) - Season number the episode belongs to
   - episodeNumber (integer) - Episode number within the season
 
-- **title.principals.tsv**
+- **title.principals**
   - tconst (string) - Alphanumeric unique identifier for titles
   - ordering (integer) - Order of importance in the title
   - nconst (string) - Alphanumeric unique identifier for names
@@ -36,7 +36,7 @@ The following datasets from IMDB are used in TSV (tab-separated values) format i
   - job (string) - Specific job title if applicable
   - characters (string) - Name of character played if applicable
 
-- **title.ratings.tsv**
+- **title.ratings**
   - tconst (string) - Alphanumeric unique identifier for titles
   - averageRating (float) - Weighted average of all user ratings
   - numVotes (integer) - Number of votes the title has received
@@ -50,7 +50,6 @@ Your task is to write a streaming application using Apache Spark that can answer
    (numVotes/averageNumberOfVotes) * averageRating
    ```
 
-Convert tsv files to parquet
 
 Stream/batch load title.ratings and calculate the metric, take top 10.
  

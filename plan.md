@@ -1,136 +1,137 @@
 # Implementation Plan for IMDB Data Analysis
 
 ## Overview
-This plan outlines the step-by-step process to create a Spark streaming application that analyzes IMDB datasets to:
-1. Find top 10 movies based on a weighted rating formula
-2. Analyze credits and titles for these movies
+This plan outlines the step-by-step process to create a Spark streaming application that:
+1. Identifies top 10 movies based on a weighted rating formula with minimum 500 votes
+2. Lists persons most often credited in these movies
+3. Lists different titles for these movies
 
 ## Prerequisites
 1. Software Requirements:
    - Python 3.8+
    - Apache Spark 3.x
+   - Docker and Docker Compose
    - Required Python packages:
      - pyspark
      - pytest (for testing)
-
+     - requests (for S3 access)
 
 ## Project Structure
 ```
 imdb-analysis/
-├── src/                      # Source code
+├── src/                    # Source code
 │   ├── __init__.py
-│   ├── config.py            # Configuration and constants
-│   ├── spark_session.py     # Spark session management
-│   ├── data_loader.py       # Data loading functions
-│   └── movie_analyzer.py    # Core analysis logic
-├── tests/                   # Test files
-│   ├── __init__.py
-│   ├── test_data_loader.py
-│   └── test_movie_analyzer.py
-├── requirements.txt         # Project dependencies
-├── main.py                 # Application entry point
-└── README.md              # Project documentation
+│   ├── config.py          # Configuration and schemas
+│   ├── data_loader.py     # Data loading and partitioning
+│   ├── stream_processor.py # Streaming logic
+│   └── movie_analyzer.py  # Analysis logic
+├── tests/                 # Test files
+├── data/                  # Local data storage
+├── scripts/              # Utility scripts
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
 ## Implementation Steps
 
-### Phase 1: Project Setup
-1. Create the project structure as outlined above
-2. Create requirements.txt with necessary dependencies
-3. Set up a virtual environment
-4. Create initial README.md with basic project information
+### Phase 1: Data Preparation
 
-### Phase 2: Core Components
+1. Data Source Configuration:
+   - Configure S3 access to bucket: imdb-data-495700631743
+   - Set up schema definitions for all tables
+   - Implement data download and conversion to Parquet
 
-1. Create Dockerfile and docker-compose to run Spark in a Docker container. 
+2. Required Tables and Partitioning Strategy:
+   a. Primary Tables (Streamed):
+      - title.ratings.tsv:
+        - Partition by: numVotes ranges (for efficient filtering of >=500 votes)
+        - Used for: Initial top 10 calculation
+        - Key fields: tconst, averageRating, numVotes
 
-2. Create config.py:
-   - Define file paths
-   - Define constants (e.g., MIN_VOTES = 500)
-   - Define schema definitions for each TSV file
+   b. Lookup Tables (Pre-loaded):
+      - title.basics.tsv:
+        - Partition by: startYear
+        - Used for: Movie title lookups
+        - Key fields: tconst, primaryTitle, originalTitle
+      
+      - name.basics.tsv:
+        - Partition by: primaryProfession
+        - Used for: Person name lookups
+        - Needs restructuring: Group by title IDs with associated names
+        - Key fields: nconst, primaryName, knownForTitles
 
-3. Test config.py
+      - title.principals.tsv:
+        - Partition by: tconst
+        - Used for: Credit analysis
+        - Key fields: tconst, nconst, category
 
-4. Create spark_session.py:
+### Phase 2: Streaming Pipeline Design
 
-   - Implement SparkSession creation
-   - Add configuration settings
-   - Include cleanup handling 
+1. Batch Processing Configuration:
+   - Chunk size: 100 records per batch
+   - Implementation of offset-based reading
+   - Watermarking strategy for stream processing
 
+2. Processing Stages:
+   a. Ratings Analysis:
+      - Stream title.ratings in batches
+      - Calculate averageNumberOfVotes across all processed records
+      - Filter for numVotes >= 500
+      - Apply ranking formula: (numVotes/averageNumberOfVotes) * averageRating
+      - Maintain running top 10 list
 
-### Phase 3: Data Processing Pipeline Details
+   b. Title Lookup:
+      - Use partitioned title.basics table
+      - Join with top 10 results on tconst
+      - Extract primaryTitle and originalTitle
 
-1. Ratings Analysis Pipeline:
-   ```python
-   def process_ratings():
-       """
-       Steps:
-       1. Load ratings stream from title.ratings.tsv
-       2. Calculate averageNumberOfVotes across all movies
-       3. Filter for movies with numVotes >= 500
-       4. Calculate weighted rating:
-          (numVotes/averageNumberOfVotes) * averageRating
-       5. Select top 10 movies by weighted rating
-       """
-   ```
+   c. Credits Analysis:
+      - Use title.principals for initial credit information
+      - Join with restructured name.basics on nconst
+      - Group and count credits by person
+      - Rank by credit count
 
-2. Movie Details Pipeline:
-   ```python
-   def process_movie_details():
-       """
-       Steps:
-       1. Load title.basics.tsv
-       2. Filter where:
-          - titleType = 'movie'
-          - tconst matches top 10 from ratings
-       3. Select required fields:
-          - tconst
-          - primaryTitle
-          - originalTitle
-          - startYear
-          - genres
-       """
-   ```
+### Phase 3: Performance Optimization
 
-3. Credits Analysis Pipeline:
-   ```python
-   def process_credits():
-       """
-       Steps:
-       1. Load title.principals.tsv
-       2. Join with name.basics.tsv on nconst
-       3. Filter for top 10 movie tconst
-       4. Group by person and count credits
-       5. Rank by credit count
-       """
-   ```
+1. Data Caching Strategy:
+   - Cache lookup tables (title.basics, name.basics)
+   - Cache intermediate results for top 10 movies
 
-### Phase 4: Streaming Implementation Details
+2. Memory Management:
+   - Configure executor memory
+   - Set up proper garbage collection
+   - Implement data cleanup for old batches
 
-1. Configure Streaming Source:
-   - Use sources defined in config.py
-   - Batch stream in chunks of 100
+3. Checkpoint Configuration:
+   - Set up checkpointing for streaming state
+   - Configure recovery mechanism
 
+### Phase 4: Output Handling
 
-3. Output Handling:
-   ```python
-   def handle_output():
-       """
-       Define output sinks:
-       1. Console output for debugging
-       2. Memory sink for querying
-       3. File sink for persistence
-       """
-   ```
+1. Results Storage:
+   - Console output for monitoring
+   - Parquet files for persistent storage
+   - In-memory tables for querying
 
+2. Monitoring and Logging:
+   - Stream processing metrics
+   - Performance statistics
+   - Error handling and recovery
 
-4. Partition Strategy:
-   ```python
-   def configure_partitioning():
-       """
-       Optimize partitioning:
-       - Ratings: by numVotes ranges
-       - Movies: by year
-       - Credits: by tconst
-       """
-   ```
+### Phase 5: Testing Strategy
+
+1. Unit Tests:
+   - Schema validation
+   - Data transformation logic
+   - Ranking formula
+
+2. Integration Tests:
+   - Streaming pipeline
+   - Lookup table joins
+   - End-to-end processing
+
+3. Performance Tests:
+   - Batch processing speed
+   - Memory usage
+   - Recovery from failures
