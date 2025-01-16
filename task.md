@@ -16,16 +16,6 @@ The following datasets from IMDB are used in TSV (tab-separated values) format i
   - primaryProfession (array) - Comma-separated list of primary professions
   - knownForTitles (array) - Comma-separated list of title IDs the person is known for
 
-- **title.basics.tsv**
-  - tconst (string) - Alphanumeric unique identifier for titles
-  - titleType (string) - Type/format of the title (e.g., movie, short, series)
-  - primaryTitle (string) - Popular title used for the work
-  - originalTitle (string) - Original title in original language
-  - isAdult (boolean) - 0: non-adult title; 1: adult title
-  - startYear (integer) - Release year of title
-  - endYear (integer) - End year for TV Series, '\\N' for other title types
-  - runtimeMinutes (integer) - Primary runtime in minutes
-  - genres (array) - Comma-separated list of genres
 
 - **title.crew.tsv**
   - tconst (string) - Alphanumeric unique identifier for titles
