@@ -18,12 +18,9 @@ class Config:
     S3_PREFIX = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com"
 
     # File paths
-    RATINGS_PATH = f"{S3_PREFIX}/title.ratings.parquet"
-    BASICS_PATH = f"{S3_PREFIX}/title.basics.parquet"
-    CREW_PATH = f"{S3_PREFIX}/title.crew.parquet"
-    EPISODE_PATH = f"{S3_PREFIX}/title.episode.parquet"
-    NAMES_PATH = f"{S3_PREFIX}/name.basics.parquet"
-    PRINCIPALS_PATH = f"{S3_PREFIX}/title.principals.parquet"
+    RATINGS_PATH = f"{S3_PREFIX}/title.ratings.tsv"
+    BASICS_PATH = f"{S3_PREFIX}/title.basics.tsv"
+    NAMES_PATH = f"{S3_PREFIX}/name.basics.tsv"
 
     # Local data directory
     DATA_DIR = "data"

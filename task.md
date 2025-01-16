@@ -6,9 +6,9 @@ Use Python and provide testing evidence.
  
 ## Data Source
     
-The following datasets from IMDB are used in parquet format in this S3 bucket: imdb-data-495700631743
+The following datasets from IMDB are used in tsv format in this directory: data/
 
-- **name.basics**
+- **name.basics.tsv**
   - nconst (string) - Alphanumeric unique identifier for names
   - primaryName (string) - Name of the person
   - birthYear (integer) - Birth year in YYYY format
@@ -16,7 +16,7 @@ The following datasets from IMDB are used in parquet format in this S3 bucket: i
   - primaryProfession (array) - Comma-separated list of primary professions
   - knownForTitles (array) - Comma-separated list of title IDs the person is known for
 
-- **title.basics**
+- **title.basics.tsv**
   - tconst (string) - Alphanumeric unique identifier for titles
   - titleType (string) - Type/format of the title (e.g., movie, short, tvSeries)
   - primaryTitle (string) - The more popular title / the title used by the filmmakers on promotional materials at the point of release
@@ -27,7 +27,7 @@ The following datasets from IMDB are used in parquet format in this S3 bucket: i
   - runtimeMinutes (integer) - Primary runtime of the title, in minutes
   - genres (array) - Comma-separated list of genres associated with the title
 
-- **title.ratings**
+- **title.ratings.tsv**
   - tconst (string) - Alphanumeric unique identifier for titles
   - averageRating (float) - Weighted average of all user ratings
   - numVotes (integer) - Number of votes the title has received
