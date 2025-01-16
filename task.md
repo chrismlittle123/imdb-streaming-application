@@ -59,11 +59,30 @@ Your task is to write a streaming application using Apache Spark that can answer
    ```
    (numVotes/averageNumberOfVotes) * averageRating
    ```
+
+Convert tsv files to parquet
+
+Stream/batch load title.ratings and calculate the metric, take top 10.
  
 2. For these 10 movies, list the persons who are most often credited and list the different titles of the 10 movies.
+
+Use title.basics as a lookup table to get the primary title and original title of each film in the top 10. Lookup the titles dynamically the merge. Make sure to partition the title.basics table.
+
+Also, create another table from name.basics which has title Id and the names of person (in a list format), essentially restructuring the data in that table. Use this table in this new structure as a lookup table for names associated with that film, in the same way that the lookup table title.basics was created.
+
+Use the ids if the 10 movies and do 
  
 The application should:
 - Be runnable on a local machine
 - Have documentation on how to execute
 - Be reproducible
 
+
+Use the following as a guide:
+
+- Use Apache Spark configured with S3, the datasets are publicly available
+- Read data in batches, read the file in chunks of 100 from S3
+- Use limit and offset-like behavior to simulate batch processing
+- Create a process function to handle each batch, calculating the desired metrics
+- Remember to repartition the data
+- Use pre-defined schemas
