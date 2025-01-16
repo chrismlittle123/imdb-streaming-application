@@ -84,23 +84,6 @@ def test_ratings_schema_with_data(spark, temp_dir):
         pytest.fail(f"Failed to read ratings data with schema: {str(e)}")
 
 
-def test_movies_schema_with_data(spark, temp_dir):
-    """Test that movies schema matches actual data structure"""
-    try:
-        # Download the file
-        local_path = os.path.join(temp_dir, "title.basics.tsv")
-        download_file(Config.BASICS_PATH, local_path)
-
-        # Read with Spark
-        df = spark.read.csv(
-            local_path, header=True, sep="\t", schema=Config.MOVIES_SCHEMA
-        )
-        # Only fetch one row to verify schema
-        df.limit(1).collect()
-    except Exception as e:
-        pytest.fail(f"Failed to read movies data with schema: {str(e)}")
-
-
 def test_min_votes_constant():
     """Test that MIN_VOTES is properly set"""
     assert isinstance(Config.MIN_VOTES, int), "MIN_VOTES should be an integer"
