@@ -99,7 +99,7 @@ class StreamProcessor:
             )
         )
 
-        # Get top 10 movies
+        # Get top 10 movies sorted by ranking from highest to lowest
         top_movies_df = processed_df.orderBy(col("ranking").desc()).limit(10)
 
         # Join with basics to get movie titles
@@ -119,10 +119,10 @@ class StreamProcessor:
         total_rows = ratings_df.count()
         print(f"\nProcessing {total_rows} records in batches of {batch_size}...")
 
-        # Show the top 10 movies with titles
+        # Show the top 10 movies with titles, sorted by ranking
         print("\nTop 10 Movies by Ranking:")
         print("=" * 120)
-        top_movies_with_titles.show(truncate=False)
+        top_movies_with_titles.orderBy(col("ranking").desc()).show(truncate=False)
 
     def stop(self):
         """Stop the Spark session"""
