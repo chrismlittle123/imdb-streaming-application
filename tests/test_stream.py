@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType
 import os
 import tempfile
+import shutil
 
 from src.stream_processor import StreamProcessor
 from src.config import Config
@@ -50,6 +51,9 @@ def test_calculate_average_votes(spark, sample_ratings_data):
 def test_calculate_ranking(spark, sample_ratings_data):
     """Test ranking calculation"""
     processor = StreamProcessor(spark)
+
+    # Set the average number of votes
+    processor.avg_num_votes = 3100.0
 
     # Calculate rankings
     ranked_df = processor._calculate_ranking(sample_ratings_data)
